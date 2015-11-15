@@ -1,0 +1,40 @@
+---
+title: "Mushroom Nominal Data Transformed"
+author: "Blandon Casenave"
+date: "November 14, 2015"
+output: html_document
+---
+
+Mushroom Multivariate Model Transformation Markdown
+
+```{r, eval=TRUE}
+myURL <- "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"
+mushrooms <- read.table(file = myURL, header = FALSE, sep = ",", na.strings = "NA")
+y <- c(mushrooms[1])
+x1 <- c(mushrooms[5])
+x2 <- c(mushrooms[9])
+x3 <- c(mushrooms[11])
+myMushrooms <- data.frame(y,x1,x2,x3)
+names(myMushrooms)[1]<-"edibleY"
+names(myMushrooms)[2]<-"bruises"
+names(myMushrooms)[3]<-"stalk_shape"
+names(myMushrooms)[4]<-"gill_size"
+
+head (myMushrooms)
+citation(package = "knitr")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

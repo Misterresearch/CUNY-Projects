@@ -20,6 +20,27 @@ names(myMushrooms)[2]<-"bruises"
 names(myMushrooms)[3]<-"stalk_shape"
 names(myMushrooms)[4]<-"gill_size"
 
+#edibleY
+levels (myMushrooms$edibleY) <- c(levels(myMushrooms$edibleY), c(1,0))
+myMushrooms$edibleY[myMushrooms$edibleY == "p"] = 1
+myMushrooms$edibleY[myMushrooms$edibleY == "e"] = 0
+
+#bruises
+levels (myMushrooms$bruises) <- c(levels(myMushrooms$bruises), c(1,0))
+myMushrooms$bruises[myMushrooms$bruises == "t"] = 1
+myMushrooms$bruises[myMushrooms$bruises == "f"] = 0
+
+#stalk_shape
+
+levels (myMushrooms$stalk_shape) <- c(levels(myMushrooms$stalk_shape), c(1,0))
+myMushrooms$stalk_shape[myMushrooms$stalk_shape == "n"] = 1
+myMushrooms$stalk_shape[myMushrooms$stalk_shape == "b"] = 0
+
+#gill_size
+levels (myMushrooms$gill_size) <- c(levels(myMushrooms$gill_size), c(1,0))
+myMushrooms$gill_size[myMushrooms$gill_size == "t"] = 1
+myMushrooms$gill_size[myMushrooms$gill_size == "e"] = 0
+
 head (myMushrooms)
 citation(package = "knitr")
 ```

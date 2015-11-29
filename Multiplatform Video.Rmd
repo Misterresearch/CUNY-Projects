@@ -1,0 +1,93 @@
+---
+title: "Multiplatform Video"
+author: "Blandon Casenave"
+date: "November 28, 2015"
+output: html_document
+---
+The data frame below represents selected columns from a larger data table that is the by-product of a many-to-many relationship between two indirectly related data sets. The data that we are looking at is video viewing across multiple websites, for the same video asset.
+
+```{r, echo=FALSE}
+myURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/FinalProjectMany.csv"
+allvideo <- read.table(file = myURL, header = TRUE, sep = ",",
+na.strings = "NA")
+
+# Convert Videostarts from factor to integer, preserving original values
+allvideo$Videostart = as.integer(as.character(allvideo$Videostart))
+
+# Replaces "NULL" with "0"
+allvideo$Videostart[which(is.na(allvideo$Videostart))] <- 0
+
+ExternalID <- c(allvideo[2])
+VideoSeries <- c(allvideo[3])
+VideoProgram <-c(allvideo[5])
+OffDomainViews <-c(allvideo[8])
+DomainViews <-c(allvideo[9])
+
+# data.frame of selected columns
+
+nullvideo <- data.frame(ExternalID, VideoSeries, VideoProgram, OffDomainViews, DomainViews)
+nullvideo
+```
+The data.table package allows for factorization of vector values, aggregating across multiple instances of the same value (Video ID) in the original data table. 
+
+The list of IDs by Videostarts, are the number of video views generated on the UBC's own website.  The IDs that have zero views, are actually "NULL" values and represent videos that were only available offdomain.  These IDs should be excluded from any totals that compare domain and offdomain performance.
+
+```{r,echo=FALSE}
+require(data.table)
+nullvideoDT <- data.table (nullvideo)
+
+nullvideoDT[, list(domainviews = sum(Videostart)), by = ExternalID]
+nullvideoDT[, list(offdomainviews = sum(Views)), by = ExternalID]
+```
+
+The graphs and data tables below represent total video views, an aggregation by VideoID, Series/Program and Episode Title across UBC's on website as well as offdomain platforms (i.e. Hulu Classic, Hulu Plus etc.). 
+
+The boxplot below, displaying means values, readily displays that the "Plus" subsription no-ad product, has many more views on average than the either of the other two ad supported models - Classir or ondomain.  The second graph, a bar chart displays total views by platform, again pointing to the dominance of the subscription "Plus" model.  The data table ranked on average views, also tells the same story.
+
+```{r, echo=FALSE}
+myURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/FinalProject%20R%20Output.csv"
+multiplatform <- read.table(file = myURL, header = TRUE, sep = ",", na.strings = "NA")
+
+TotalViews <- c(multiplatform[5])
+PlatformType <- c(multiplatform[4])
+Episode <- c(multiplatform[3])
+Series <- c(multiplatform[2])
+VideoID <-c(multiplatform[1])
+
+myMultiplatform <-data.frame(VideoID,Series,Episode,PlatformType,TotalViews)
+
+require(ggplot2)
+options(scipen = 10)
+ggplot (multiplatform, aes(y = Episode.Start, x = Type)) + geom_boxplot(fill = "blue", color = "red")
+
+require(data.table)
+multiplatformDT <- data.table (myMultiplatform)
+multiplatformsort <- multiplatformDT[order(-Episode.Start),]
+
+colors = c("red", "blue", "green")
+viewtype <- tapply(multiplatformDT$Episode.Start, multiplatformDT$Type, sum)
+
+barplot(viewtype, main = "Total Views", xlab = "Platform", col=colors, xlim = NULL, ylim = NULL)
+
+videobp <- barplot(viewtype, main = "Total Views", xlab = "Platform", col=colors, xlim = NULL, ylim = NULL)
+
+text(videobp, 0, round(viewtype,  1),cex=1,pos=3)
+
+multiplatformDT[, list(avgviews = mean(Episode.Start), sumviews = sum(Episode.Start)), by = Type]
+```
+
+The table below shows a descending order ranker of total views (across all platforms) by individual episode titles for the "Blindspark" series on UBC. 
+
+```{r,echo=FALSE}
+multiplatformsort[, list(avgviews = mean(Episode.Start), sumviews = sum(Episode.Start)), by = Episode.Title]
+
+
+```
+
+The following stats give us an idea of the variablilty across our viewcounts for Blindspark view, demonstrated by the substantial difference in median (73.9K) and mean (218.5K) values.
+
+```{r, echo=FALSE}
+summary (multiplatformDT$Episode.Start)
+```
+
+Source: <a href=https://github.com/Misterresearch/CUNY-Projects/blob/master/videoprogramsA.sql?>SQL Data Tables and Transformations</a>.

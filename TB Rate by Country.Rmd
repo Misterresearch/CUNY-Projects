@@ -1,0 +1,29 @@
+---
+title: "TB Infection by Country"
+author: "Blandon Casenave"
+date: "February 11, 2016"
+output: html_document
+---
+
+```{r, echo=FALSE}
+tbcountryURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/tbpopulationoutput.csv"
+tbcountrytotal <- read.table(file = tbcountryURL, header = TRUE, sep = ",", na.strings = "NA")
+
+nation <-c(tbcountrytotal[1])
+years <-c(tbcountrytotal[2])
+size <-c(tbcountrytotal[3])
+countrygroup <-c(tbcountrytotal[4])
+tbchild <-c(tbcountrytotal[6])
+tbadult <-c(tbcountrytotal[7])
+tbelderly <-c(tbcountrytotal[8])
+tottb <-c(tbcountrytotal[9])
+
+tbcountryDF <-data.frame(nation, years, size, countrygroup, tbchild, tbadult, tbelderly,tottb)
+
+require(data.table)
+tbcountryDT <- data.table(tbcountryDF)
+
+tbcountryDT[, list(tbcount = mean(tot.tb),popcount = mean(size)), by = nation]
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

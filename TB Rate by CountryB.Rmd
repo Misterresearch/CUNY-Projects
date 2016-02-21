@@ -1,0 +1,37 @@
+---
+title: "TB Infection by Country"
+author: "Blandon Casenave"
+date: "February 11, 2016"
+output: html_document
+---
+
+```{r, echo=FALSE, fig.cap="TB Rates by Country"}
+tbcountryURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/tbpop.csv"
+tbcountrytotal <- read.table(file = tbcountryURL, header = TRUE, sep = ",", na.strings = "NA")
+
+nation <-c(tbcountrytotal[1])
+years <-c(tbcountrytotal[2])
+size <-c(tbcountrytotal[3])
+tbchild <-c(tbcountrytotal[6])
+tbadult <-c(tbcountrytotal[7])
+tbelderly <-c(tbcountrytotal[8])
+tottb <-c(tbcountrytotal[9])
+
+tbcountrytotal$tot.tb = as.numeric(tbcountrytotal$tot.tb) 
+tbrate = (tbcountrytotal$tot.tb/tbcountrytotal$size)
+tbpercentvector <-c(tbrate)
+tbratepercent = paste(round(100*tbpercentvector,2), "%", sep = "")
+
+
+tbcountryDF <-data.frame(nation, years, size, tbchild, tbadult, tbelderly,tottb,tbratepercent)
+
+require(data.table)
+tbcountryDT <- data.table(tbcountryDF)
+
+tbcountryDT[, list(popcount = mean(size), tbcount = mean(tot.tb),  tbrate = mean(tbratepercent)), by = nation]
+
+barplot(tbpercentvector, names.arg=nation, horiz = TRUE, cex.axis = .5, cex.names = .5, main ="TB Rate by Country", xlab="Avg. Rate", ylab="Nation")
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

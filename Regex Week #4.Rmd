@@ -1,0 +1,62 @@
+---
+title: 'Reg Ex Week #4'
+author: "Blandon Casenave"
+date: "February 21, 2016"
+output: html_document
+---
+
+```{r, echo=TRUE}
+
+#Regex Question #3 - simply copy names function
+raw.data <- "555-1239Moe Szyslak (636) 555-0113Burns, C. Montgomery555-6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Juilius Hibbert"
+library(stringr)
+name <- unlist (str_extract_all(raw.data, "[[:alpha:]., ]{2,}"))
+name
+
+str_extract(name,"[[:alpha:]., ]{2,}" )
+
+phone <- unlist(str_extract_all(raw.data, "\\(?(\\d{3})?\\)?(-| )?\\d{3}(-| )?\\d{4}"))
+phone
+data.frame(name = name, phone = phone)
+
+#Regex Question 3a
+str_replace_all(name, "^([^,]*), (.*)", "\\2 \\1")
+nameA<-(str_replace_all(name, "^([^,]*), (.*)", "\\2 \\1"))
+str_replace_all(nameA, "\\w+\\.", "")
+str_trim(str_replace_all(nameA, "\\w+\\.", ""))
+
+#Regex Question 3b
+str_detect(name, "\\w+\\.")
+
+#Regex Question 3c
+str_detect(nameA, "\\w+\\s\\w+")
+
+#Regex Question 7
+#This yields default incorrect output
+tag <-"<title>+++BREAKING NEWS+++</title>"
+firsttag <- unlist(str_extract_all(tag, "<.+>"))
+firsttag
+
+#Below are two options for extracting "title" from the first tag
+firsttag <- unlist(str_extract_all(tag, "<.....>"))
+firsttag
+
+firsttag2 <- unlist(str_extract_all(tag, "<.{1,5}>"))
+firsttag2
+
+#Regex Question 8
+
+#This yields default incorrect output
+bitheoremstring <- "(5-3)^2=5^2-2*5*3+3^2"
+
+bitheoremstring
+bitheoremextract <- unlist(str_extract_all(bitheoremstring, "[^0-9=+*()]+"))
+bitheoremextract
+
+#This yields all of the operators within a string
+bitheoremextract <- unlist(str_extract_all(bitheoremstring, "\\D"))
+bitheoremextract
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

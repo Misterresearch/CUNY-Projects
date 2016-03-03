@@ -1,0 +1,90 @@
+---
+title: 'Chess Tourney Project #1'
+author: "Blandon Casenave"
+date: "February 25, 2016"
+output: html_document
+---
+
+```{r, echo=FALSE}
+
+chessURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/tournamentinfo.txt"
+
+#chesstabA <- read.table(file = chessURL, header = FALSE, sep = ",",
+#na.strings = "NA")
+
+read.delim(chessURL, header = FALSE, sep = "|", quote = "", fill = TRUE, comment.char = "-")
+
+chesstab <- read.delim(chessURL, header = FALSE, sep = "|", quote = "", fill = TRUE, comment.char = "-")
+
+
+library(stringr)
+
+#Create a transformed Data Frame
+
+#Create two new variables, player number and player state from V1
+#Extraction of player number
+playernum <-str_extract(chesstab$V1, "\\d+")
+playernum <- playernum[!is.na(playernum)]
+
+#Exraction of player state
+#Difficulty extracting state more generally with \\w+, instead I used literal values 
+playerstate <-str_extract(chesstab$V1, "ON|OH|MI")
+playerstate <- playerstate[!is.na(playerstate)]
+
+#Extract Player Name.  This throws an error with "View()", but works fine in the console.
+nameextractA<-str_extract(chesstab$V2,"[[:alpha:] (?=\\d)]{2,}")
+playername<-str_extract(nameextractA,"[[:alpha:] ]{2,}")
+playername <- playername[!is.na(playername)]
+#First two values were column names
+playername <-tail(playername,-2)
+
+
+#Extract pre-rating into separate variable
+#A extracted twice which probably isn't ideal, I wanted to use "R:" as a demiliter instead
+chesspreA<-(str_extract(chesstab$V2, "R: +\\d+"))
+playerpre<-(str_extract(chesspreA, "\\d+"))
+playerpre <- playerpre[!is.na(playerpre)]
+
+chessattributeDF<-data.frame(playernum,playerstate,playername,playerpre)
+chessattributeDF
+
+#Extraction of playerscore, the length is 63 as compared to 64 for the attribute variables
+#playerscore <-str_extract(chesstab$V3, "\\d+\\.\\d")
+#playerscore <- playerscore[!is.na(playerscore)]
+
+
+#Extraction of Round1
+#round1 <-str_extract(chesstab$V4, "\\d+")
+#round1 <- round1[!is.na(round1)]
+
+#Extraction of Round2
+#round2 <-str_extract(chesstab$V5, "\\d+")
+#round2 <- round2[!is.na(round2)]
+
+#Extraction of Round3
+#round3 <-str_extract(chesstab$V6, "\\d+")
+#round3 <- round3[!is.na(round3)]
+
+#Extraction of Round4
+#round4 <-str_extract(chesstab$V7, "\\d+")
+#round4 <- round4[!is.na(round4)]
+
+#Extraction of Round5
+#round5 <-str_extract(chesstab$V8, "\\d+")
+#round5 <- round5[!is.na(round5)]
+
+#Extraction of Round6
+#round6 <-str_extract(chesstab$V9, "\\d+")
+#round6 <- round6[!is.na(round6)]
+
+#Extraction of Round7
+#round7 <-str_extract(chesstab$V10, "\\d+")
+#round7 <- round7[!is.na(round7)]
+
+
+
+
+#write.csv(chesstab, "/Users/digitalmarketer1977/Desktop/chesstable.csv")
+```
+
+

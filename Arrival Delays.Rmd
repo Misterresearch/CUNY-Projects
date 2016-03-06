@@ -1,0 +1,46 @@
+---
+title: "Arrival Delays Wide"
+author: "Blandon Casenave"
+date: "March 5, 2016"
+output: html_document
+---
+
+```{r, echo=FALSE}
+delaysURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/delayswide.csv"
+
+delays <- read.table(file = delaysURL, header = TRUE, sep = ",",
+na.strings = "NA")
+delays
+
+airline <- delays$X
+status <- delays$X.1
+la <- delays$Los.Angeles
+ph <- delays$Phoenix
+sd <- delays$San.Diego
+sf <- delays$San.Francisco
+sea <- delays$Seattle
+delaysDF <-data.frame(airline,status,la,ph,sd,sf,sea)
+#Not ideal but a solution of last resort
+delaysDF$airline <-c("Alaska", "Alaska"," " , "AM WEST" , "AM WEST")
+delaysDF$airline = as.character(delaysDF$airline)
+delaysDF$status = as.character(delaysDF$status)
+delaysDF$la = as.numeric(delaysDF$la)
+delaysDF$ph = as.numeric(delaysDF$ph)
+delaysDF$sd = as.numeric(delaysDF$sd)
+delaysDF$sf = as.numeric(delaysDF$sf)
+delaysDF$sea = as.numeric(delaysDF$sea)
+
+library(tidyr)
+library(dplyr)
+
+gather(delaysDF, "city", "n", 3:7, na.rm = TRUE)
+delaystidy <- data.frame(gather(delaysDF, "city", "n", 3:7, na.rm = TRUE))
+delaygroup <-(delaystidy %>% group_by(airline, status) %>% summarise(total = sum(n)))
+spread(delaygroup, status, total)
+performance<-spread(delaygroup, status, total)
+#mutate funciton fails
+#dplyr::mutate(performance, successrate = performance$`on time` / (performance$delayed + performance$`on time`))
+
+```
+
+

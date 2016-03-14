@@ -1,0 +1,39 @@
+---
+title: "Days Most Worked by Signalmen"
+author: "Blandon Casenave"
+date: "March 9, 2016"
+output: html_document
+---
+
+The opportunity to tidy this data set came from the "Typical Workday" questions for week one and week two.  By using the gather function, it permits the data table to go from 50 columns down to 38. Further filtering was done to remove responses of "2" or no to those questions, since the response were binary - we don't need both values.  The net result is much longer file, because there's a row for each respondent in reply to these questions. 
+
+```{r}
+doturl<-"https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/Signalmen%20background%20data.csv"
+
+dottable <- read.table(file = doturl, header = TRUE, sep = ",",
+na.strings = "NA")
+
+library(tidyr)
+library(dplyr)
+
+#Reduce column count from 50 to 38, now tidy
+dottable1<-gather(dottable, "two week cycle", "count", 17:30)
+
+
+#Remove extraneous "no" responses from binary typical_workday variables
+dottidy<-(dplyr::filter(dottable1, dottable1$count!=2))
+
+#sort table by respondent ID 
+dotfilter<-dplyr::arrange(dottidy, `ID`)
+
+#The following function gives us a rank order of the days most worked.
+dotdayorder<-(dotfilter %>% group_by(`two week cycle`) %>% summarise(total = sum(count, na.rm = TRUE)))
+
+dotdaysort<-arrange(dotdayorder, desc(total))
+dotdaysort
+
+#change path below to local folder
+#write.csv(dotdaysort, "/Users/digitalmarketer1977/Desktop/dotdaysort.csv")
+```
+
+

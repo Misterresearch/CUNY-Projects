@@ -1,0 +1,49 @@
+---
+title: "All-time Basketball Wins By Team"
+author: "Blandon Casenave"
+date: "March 8, 2016"
+output: html_document
+---
+
+For this exercise, we leveraged the XML, tidy and dplyr packages.  The goal was to turn a wide table into a more vertical table via tidying, and then leverage dplyr to summarize data and tell a story. 
+
+Instead of manually exporting the basketball table, and then uploading to Github, I thought it would be fun to leverage the XML package and read the HTML table directly from the website. Then after loading tidy and dyplyr.  The gather function helps to quickly elongate the data set, Then I had to go about the business of defining variable types. Also, column titles were repeated throughout the table, so I used the filter function to remove rows that contained the value of "Season". Finally leverage group_by, sorting and arranging allowed me to summarize total wins by team. Of course there are many other types of analysis that can be accomplished once the data has been tidyed and filtered. 
+
+```{r, echo=TRUE}
+
+bballURL <- "http://www.basketball-reference.com/leagues/NBA_wins.html"
+
+library(XML)
+
+#Create table from the first table on webpage
+bball <- readHTMLTable (bballURL, which = 1, header = TRUE, stringAsFactors = TRUE, na.strings = "NA")
+library(tidyr)
+library(dplyr)
+
+#Reduce column count from 33 to 5, now tidy
+bballtidy<-(gather(bball, "team", "n", 4:33, na.rm = TRUE))
+#Change var type, and remove the recurring title column headings
+bballtidy$Rk=as.numeric(bballtidy$Rk)
+bballtidy$Season=as.character(bballtidy$Season)
+bballtidy$Lg=as.character(bballtidy$Lg)
+bballtidy$team=as.character(bballtidy$team)
+bballtidy$n=as.numeric(bballtidy$n)
+bballfilter<-(dplyr::filter(bballtidy, bballtidy$Season!="Season"))
+
+#Sort by Rk then by n. Rk is a proxy for Season, no inherit meaning
+bballorder<-dplyr::arrange(bballfilter, (Rk), desc(n))
+
+#tidy and sorted table
+bballteamsum <- bballorder %>% group_by(team) %>%summarise(total = sum(n, na.rm =TRUE))
+
+bballsort<-arrange(bballteamsum ,desc(total))
+bballsort
+
+#change path below to local folder
+#write.csv(bballsort, "/Users/digitalmarketer1977/Desktop/bballsort.csv")
+```
+
+We're able to see here that looking across the NBA, and it's predecessor the BBA, that the lakers are LA Lakers (3232) are the most winnigest team in Basketball history - followed by the Boston Celtics (3212) - which helps to explain their historic rivalry. 
+
+
+Source: <a href=http://www.basketball-reference.com/leagues/NBA_wins.html>Basketball Wins</a>

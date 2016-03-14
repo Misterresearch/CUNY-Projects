@@ -1,0 +1,54 @@
+---
+title: "Battery Electric Cars"
+author: "Blandon Casenave"
+date: "March 8, 2016"
+output: html_document
+---
+In this instance the second variable had multiple values contained in a single cell. These values should be broken out into separate columns. The following code reads the table in directly from the webpage by leveraging the XML package. Then the tidyr separate function is used to create distinct columns.  While this makes the table wider, it does accomplish the task of having columns with discrete values. The write.csv function will need to be uncommented in order to export transformed table. 
+
+```{r, echo=FALSE}
+library(XML)
+
+batteryURL <- "http://www.just-auto.com/electricvehicles"
+
+#Create table from the second table on webpage
+batteryHTML <- readHTMLTable(batteryURL, which = 2, header = TRUE, stringAsFactors = FALSE, na.strings = "NA")
+
+library(tidyr)
+library(dplyr)
+
+
+#Separate multiple values in a single cell in V2 into discreet columns
+batteryseparate<-separate(batteryHTML, Market,c("Market1", "Market2", "Market3"), sep = ",")
+
+vehicle<-batteryseparate$Vehicle
+vehicle=as.character(vehicle)
+market1<-batteryseparate$Market1
+market1=as.character(market1)
+market2<-batteryseparate$Market2
+market2=as.character(market2)
+market3<-batteryseparate$Market3
+bodystyle<-batteryseparate$`Body style`
+bodystyle=as.character(bodystyle)
+range<-batteryseparate$`Electric range (miles)`
+range=as.character(range)
+packsize<-batteryseparate$`Pack size (kwh)`
+packsize=as.character(packsize)
+integrator<-batteryseparate$`Pack integrator`
+integrator=as.character(integrator)
+cellmaker<-batteryseparate$`Cell    maker`
+cellmaker=as.character(cellmaker)
+cellchem<-batteryseparate$`Cell    chemistry`
+cellchem=as.character(cellchem)
+motorpeak<-batteryseparate$`Peak    motor output (kw)`
+motorpeak=as.character(motorpeak)
+salesbegin<-batteryseparate$`Sales    begin`
+salesbegin=as.character.Date(salesbegin)
+ 
+battery1<-data.frame(vehicle, market1,market2,market3,bodystyle, range, packsize, integrator, cellmaker, cellchem, motorpeak, salesbegin, check.rows = FALSE, stringsAsFactors = FALSE)
+
+#change path below to local folder
+#write.csv(battery1, #"/Users/digitalmarketer1977/Desktop/battery1.csv")
+```
+
+

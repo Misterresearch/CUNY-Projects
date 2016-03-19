@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<my_books>
+<book>
+  <title>The Wretched of the Earth</title>
+  <author>Frantz Fanon</author>
+  <genre>African</genre>
+  <type>Politics</type>
+  <language>French</language> 
+</book>
+<book>
+  <title>The New Jim Crow</title>
+  <author>Michelle Alexander</author>
+  <genre>African-American</genre>
+  <type>Politics</type>
+  <language>English</language>
+</book>
+<book>
+  <title>American Negro Slavery</title>
+  <author>Allen Weinstein</author>
+  <genre>American</genre>
+  <type>History</type>
+  <language>English</language>
+</book>
+<book>
+  <title>American Negro Slavery</title>
+  <author>James Otto Gatto</author>
+  <genre>American</genre>
+  <type>History</type>
+  <language>English</language>
+</book>
+</my_books>

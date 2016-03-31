@@ -1,0 +1,129 @@
+---
+title: "Video Usage Comparison by Brand & Platform"
+author: "Blandon Casenave"
+date: "March 27, 2016"
+output: html_document
+---
+
+<b>Abstract</b><br>
+
+Generally speaking providers of video content are interested in understanding what their strongest brands are, and how consumption might vary across platforms. The primary goal of this exercise is to determine how usage might differ by brand as the platforms vary. This will help business owners understand where to put invest dollars in future products and content. The platfroms were divided into two sets - desktop/browser and app/devices.  Furture research would involved more granular segments such as operating system and individual devices (Roku, XBox, Apple TV, etc.).
+
+<b>Methodology</b><br>
+
+At a high level, the process of securing data involve retreiving CONFIDENTIAL internal video usage data from content owner, posting to github, loading into R, and the normalizing string values. The data munging and normalization plan was to use load the data, use base R functions and possibly Regex to clean up the data and then the dplyr library to group_by and join the disparate data sets. Due to unexpected results with the dplyr package, the aggregation functions were performed with base R functions instead.  
+
+There were two attributes and one metric/numeric value selected from each source - Network, Program & Video Start counts. Although the data sets are structered, the content management systems (cms) that generates the meta-data for each of these attributes varies. Due to this challenge a bit of normalization must occur, before any analysis can begin. The first challenge was loading the data into R, the fill=true function along with iconv function was needed to rid the data of illegal characters that are common when dealing with data generated on the internet. 
+
+There was a levels check on the Network variables across both sources (commented out in the code), from there a manual find/replace operation was performed. A more dynamic solution using Regex might have been preferable in this case, but the universe of value was 15 or less (the number of networks) - so using manual approach is indeed scalable. From there a data frame was created, and the process of tranforming data types from factors to characters, and then all lowercase was undertaken. 
+
+The primary purpose for trying to normalize the values in the network variables of each table was so that they could be joined to get an aggregate view.
+
+The tables below are aggregated video views/starts by network for PC/Browser & Apps/Connected Devices. 
+
+```{r, echo = FALSE, warning=FALSE}
+
+# The fill argument was required for both of the data sets below, the first time I encountered the error scan message.
+
+AppVideoURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/Digital%20App%20Video%20Consumption.csv"
+
+AppVideo <- read.table(file = AppVideoURL, header = TRUE, sep = ",", strip.white = TRUE, na.strings = "", fill = TRUE)
+
+
+#Recoding work done here, tranformed character values, used levels as reference.
+#levels(AppVideo$Network)
+AppVideo$Network[AppVideo$Network=="nbcentertainment"] <- "NBC"
+AppVideo$Network[AppVideo$Network=="Telemundo Now"] <- "Telemundo"
+
+#App Video Data Frame
+AppVideoNetwork <- AppVideo$Network
+AppVideoProgram <- AppVideo$Program
+AppVideoStarts <- AppVideo$VOD.Episode.Start
+#stringAsFactors set to false doesn't seem to convert vars to characters.
+AppVideoNetwork = as.character(AppVideoNetwork)
+AppVideoNetwork<-tolower(AppVideoNetwork)
+AppVideoProgram = as.character(AppVideoProgram)
+#discovered iconv, handy for web based data sources.
+AppVideoProgram <- iconv(AppVideoProgram,"WINDOWS-1252","UTF-8")
+AppVideoProgram<-tolower(AppVideoProgram)
+AppVideoDF <- data.frame(AppVideoNetwork, AppVideoProgram, AppVideoStarts, row.names = NULL, check.rows = FALSE, stringsAsFactors = FALSE)
+
+
+BrowserVideoURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/Digital%20Desktop%20Video%20Consumption.csv"
+
+BrowserVideo <- read.table(file = BrowserVideoURL, header = TRUE, sep = ",", strip.white = TRUE, na.strings = "", fill = TRUE)
+
+#Recoding work done here, tranformed character values, used levels as reference.
+#levels(BrowserVideo$Network)
+BrowserVideo$Network[BrowserVideo$Network=="e"] <- "E!"
+BrowserVideo$Network[BrowserVideo$Network=="mun2"] <- "NBC Universo"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Bravo"] <- "Bravo"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - CNBC"] <- "CNBC"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - E!"] <- "E!"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Esquire"] <- "Esquire"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - MSNBC"] <- "MSNBC"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - NBC"] <- "NBC"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - NBC News"] <- "NBC News"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - NBC Universo"] <- "NBC Universo"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Oxygen"] <- "Oxygen"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Sports Network"] <- "Sports Network"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Sprout"] <- "Sprout"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Syfy"] <- "Syfy"
+
+#Browser Video Data Frame
+BrowserVideoNetwork <- BrowserVideo$Network
+BrowserVideoProgram <- BrowserVideo$Program
+BrowserVideoStarts <- BrowserVideo$VOD.Episode.Start
+#stringAsFactors set to false doesn't seem to convert vars to characters.
+BrowserVideoNetwork = as.character(BrowserVideoNetwork)
+BrowserVideoNetwork<-tolower(BrowserVideoNetwork)
+BrowserVideoProgram = as.character(BrowserVideoProgram)
+#discovered iconv, handy for web based data sources.
+BrowserVideoProgram <- iconv(BrowserVideoProgram,"WINDOWS-1252","UTF-8")
+BrowserVideoProgram<-tolower(BrowserVideoProgram)
+BrowserVideoDF <- data.frame(BrowserVideoNetwork, BrowserVideoProgram, BrowserVideoStarts, stringsAsFactors = FALSE)
+
+#grouping using base R, dplyring functions not working.
+Browsergroup <-(aggregate(BrowserVideoStarts ~ BrowserVideoNetwork, BrowserVideoDF, sum))
+Appgroup <-(aggregate(AppVideoStarts ~ AppVideoNetwork, AppVideoDF, sum))
+Browsergroup <- Browsergroup[order(-Browsergroup$BrowserVideoStarts),]
+Appgroup <-Appgroup[order(-Appgroup$AppVideoStarts),]
+
+Videomerge <- merge(x=Browsergroup, y=Appgroup, by.x = 'BrowserVideoNetwork', by.y = 'AppVideoNetwork')
+AllVideoStarts <-(Videomerge$BrowserVideoStarts +Videomerge$AppVideoStarts)
+AllVideoNetworks <-Videomerge$BrowserVideoNetwork
+AllVideoDF <- data.frame(AllVideoNetworks, AllVideoStarts, stringsAsFactors = FALSE)
+AllVideoDF <-AllVideoDF[order(-AllVideoDF$AllVideoStarts),]
+Browsergroup
+Appgroup
+AllVideoDF
+```
+
+Results are also displayed below in the horizontal bar graph, notice that the union set network string values match across both charts and tables.  
+
+```{r, echo=FALSE, warning=FALSE}
+#Barplots for each data set
+barplot(Browsergroup$BrowserVideoStarts, col = "blue", main = "PC/Browser Views by Network", xlab = "Video Starts", border = "red", horiz = TRUE, beside = TRUE, names.arg = Browsergroup$BrowserVideoNetwork, cex.names = .6, cex.axis = .6, las=2)
+
+barplot(Appgroup$AppVideoStarts, col = "red", main = "App & Connected Device Views by Network", xlab = "Video Starts", border = "blue", horiz = TRUE, beside = TRUE, names.arg = Appgroup$AppVideoNetwork, cex.names = .6, cex.axis = .6, las=2)
+
+barplot(AllVideoDF$AllVideoStarts, col = "gray", main = "All Views by Network", xlab = "Video Starts", border = "blue", horiz = TRUE, beside = TRUE, names.arg = AllVideoDF$AllVideoNetworks, cex.names = .6, cex.axis = .6, las=2)
+```
+
+<b>Executive Summary</b><br>
+
+The data indicates that broadcast network, nbc, does in fact generate the most usage of any brands aross both brands. However, more of its usage happens on PC/Browser versus mobile apps and connected devices (127K vs. 97K).  However, for the cable brands such as Bravo, Telemundo, USA & Syfy more of the usage is on mobile apps & devices - indicating a younger audience. The recommendation would be for cable brands to continue to invest more in mobile apps & devices, while more traditional broadcast brands like NBC might need to continue to invest in older PC technology in order to service it's older audience segments.  
+
+<b>Function Reference Section:</b>
+
+fill argument to help read.table execute<br>
+Source: <a href=http://stackoverflow.com/questions/18161009/error-in-reading-in-data-set-in-r>Stack Overflow Posting on Error in Reading in Data Set</a>
+
+iconv function to handle bad characters<br>
+Source: <a href=http://stackoverflow.com/questions/13187605/error-in-tolower-invalid-multibyte-string>Stack Overflow Posting on Invalin Multibyte String</a>
+
+<b>Notes:<b><br>
+
+Dplyr functions didn't deliver expected results<br>
+Had Difficulty using Regex to parse and replace values as expected<br>
+Base Order functions failed on data frames and tables.<br> 

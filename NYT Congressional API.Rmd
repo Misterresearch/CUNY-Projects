@@ -1,0 +1,48 @@
+---
+title: "NYT Congressional API XML & JSON"
+author: "Blandon Casenave"
+date: "March 31, 2016"
+output: Run to Create CSV files
+---
+For this exercise, we've chosen the congress members API hosted by the NY Times website. Below are two data frames constructed from XML & JSON feeds. 
+
+FOR THE "write.csv" FUNCTION PLEASE CREATE YOUR OWN FOLDER PATH
+
+```{r}
+
+library(XML)
+library(xtable)
+
+congressXML <- xmlParse(file = "http://api.nytimes.com/svc/politics/v3/us/legislative/congress/113/house/members/current.xml?api-key=b8eb298795d63230e96120e649a74571:17:26915821")
+#Class check
+class(congressXML)
+
+congressDF <- xmlToDataFrame(nodes = getNodeSet(congressXML, "//members/member"))
+congressDF
+#change path below to local folder
+write.csv(congressDF, "/Users/digitalmarketer1977/Desktop/congressXML.csv")
+
+require(jsonlite)
+require(RJSONIO)
+#checks to see if JSON file is valid
+isValidJSON("http://api.nytimes.com/svc/politics/v3/us/legislative/congress/113/house/members/current.json?api-key=b8eb298795d63230e96120e649a74571:17:26915821")
+
+
+congressJSON<- fromJSON("http://api.nytimes.com/svc/politics/v3/us/legislative/congress/113/house/members/current.json?api-key=b8eb298795d63230e96120e649a74571:17:26915821", nullValue = NA, simplify = FALSE)
+congressJSONdf <-do.call("rbind.fill", lapply (congressJSON[[3]] [[1]] [[5]], as.data.frame, stringsAsFactors = TRUE))
+#change path below to local folder
+write.csv(congressJSONdf, "/Users/digitalmarketer1977/Desktop/congressJSON.csv")
+```
+
+Sources:
+
+Inside-R provided functions for parsing XML API feed:
+<a href=http://www.inside-r.org/packages/cran/xml/docs/xmlToDataFrame> Inside-R</a>
+
+JSON Data Frame
+
+Using "rbind.fill" and "as.data.frame" removed errors as compared to "rbind" and "data.frame".  
+
+<a href=http://stackoverflow.com/questions/16947643/getting-imported-json-data-into-a-data-frame-in-r>Getting imported json data into a data frame in R</a>
+
+

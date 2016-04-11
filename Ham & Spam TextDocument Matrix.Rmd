@@ -1,0 +1,74 @@
+---
+title: "Ham & Spam Text-Document Matrix"
+author: "Blandon Casenave"
+date: "April 11, 2016"
+output: html_document
+---
+
+```{r, echo=TRUE}
+#textpacks <- c("tm", "XML", "SnowballC","RCurl", "stringr", "ggplot2", "wordcloud", "cluster", "igraph")
+#install.packages(textpacks, dependencies = TRUE)
+library(stringr)
+library(tm)
+library(SnowballC)
+
+#Please adjust file paths below for your local machine
+spamdir <- "/Users/digitalmarketer1977/Desktop/spamham/spam_2/"
+allspam <- list.files(spamdir)
+for(i in 1:length(allspam)) {
+  spampath <- str_c(spamdir,allspam[i])
+  spamtxt <- readLines(spampath)
+  spamtxt <- str_c(spamtxt, collapse = "")
+  write(spamtxt, str_c("/Users/digitalmarketer1977/Desktop/spamham/spamtxt/", i, ".txt"))
+  }
+spamdirnew <-file.path("~", "Desktop/spamham", "spamtxt")
+spamdocs <- Corpus(DirSource(spamdirnew))
+#The validations below reveal files with expected character counts
+#inspect(spamdocs[1:5])
+#spamdocs
+spamdocs <- tm_map(spamdocs, removePunctuation)
+for(j in seq(spamdocs))   
+{   
+  spamdocs[[j]] <- gsub("/", " ", spamdocs[[j]])   
+  spamdocs[[j]] <- gsub("@", " ", spamdocs[[j]])   
+  spamdocs[[j]] <- gsub("\\|", " ", spamdocs[[j]])   
+} 
+spamdocs <- tm_map(spamdocs, removeNumbers)
+spamdocs <- tm_map(spamdocs, tolower)
+spamdocs <- tm_map(spamdocs, removeWords, stopwords("english"))
+spamdocs <- tm_map(spamdocs, stemDocument)
+spamdocs <- tm_map(spamdocs, stripWhitespace)
+spamdocs <- tm_map(spamdocs, PlainTextDocument)
+spamtdm2 <-TermDocumentMatrix(spamdocs)
+spamtdm2
+
+hamdir <- "/Users/digitalmarketer1977/Desktop/spamham/easy_ham/"
+allham <- list.files(hamdir)
+for(i in 1:length(allham)) {
+  hampath <- str_c(hamdir,allham[i])
+  hamtxt <- readLines(hampath)
+  hamtxt <- str_c(hamtxt, collapse = "")
+  write(hamtxt, str_c("/Users/digitalmarketer1977/Desktop/spamham/hamtxt/", i, ".txt"))
+}
+hamdirnew <-file.path("~", "Desktop/spamham", "hamtxt")
+hamdocs <- Corpus(DirSource(hamdirnew))
+hamdocs <- tm_map(hamdocs, removePunctuation)
+for(j in seq(hamdocs))   
+{   
+  hamdocs[[j]] <- gsub("/", " ", hamdocs[[j]])   
+  hamdocs[[j]] <- gsub("@", " ", hamdocs[[j]])   
+  hamdocs[[j]] <- gsub("\\|", " ", hamdocs[[j]])   
+} 
+hamdocs <- tm_map(hamdocs, removeNumbers)
+hamdocs <- tm_map(hamdocs, tolower)
+hamdocs <- tm_map(hamdocs, removeWords, stopwords("english"))
+hamdocs <- tm_map(hamdocs, stemDocument)
+hamdocs <- tm_map(hamdocs, stripWhitespace)
+hamdocs <- tm_map(hamdocs, PlainTextDocument)
+hamtdm2 <-TermDocumentMatrix(hamdocs)
+hamtdm2
+```
+
+Aside from the requird reading material in chapter 10 & 17 of Automated Data Collection with R, I used a few other resources to better understand the topic.  However, the link below is where I actually found some functions for filtering, and helpful framwork for building out the code.  Nonetheless, transforming each e-mail into a text file was not aided by the below resource.
+
+Source: <a href=https://rstudio-pubs-static.s3.amazonaws.com/31867_8236987cf0a8444e962ccd2aec46d9c3.html>Basic Text Mining in R</a>

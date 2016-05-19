@@ -1,0 +1,95 @@
+---
+title: "YouTube Survey & Twitter Text Analysis"
+author: "Blandon Casenave"
+date: "May 19, 2016"
+output: html_document
+---
+
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#textpacks <- c("tm", "XML", "SnowballC","RCurl", "stringr", "ggplot2", "wordcloud", "cluster", "igraph")
+#install.packages(textpacks, dependencies = TRUE)
+library(stringr)
+library(tm)
+library(SnowballC)
+library(RCurl)
+
+git_urls <-(c("https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubecelebrities.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubefavchannel.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubequality.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubereasons.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubeshows.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubethoughts.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubetvshows.txt", "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/83d2875ea83f8dadd647d3f2ee00a605bbd8083b/youtubevideotype.txt"))
+for(i in 1:length(git_urls)) {
+ ytresponse <- getURL(git_urls[i])
+write(ytresponse, str_c("/Users/digitalmarketer1977/Desktop/youtubetext/youtubetxt/", i, ".txt"))}
+#adjust file path for your local machine
+youtubedirnew <-file.path("~", "Desktop/youtubetext", "youtubetxt")
+youtubedocs <- Corpus(DirSource(youtubedirnew))
+#The validations below reveal files with expected character counts
+#inspect(youtubedocs[1:5])
+#youtubedocs
+youtubedocs <- tm_map(youtubedocs, removePunctuation)
+for(j in seq(youtubedocs))   
+{   
+  youtubedocs[[j]] <- gsub("/", " ", youtubedocs[[j]])   
+  youtubedocs[[j]] <- gsub("@", " ", youtubedocs[[j]])   
+  youtubedocs[[j]] <- gsub("\\|", " ", youtubedocs[[j]])   
+} 
+youtubedocs <- tm_map(youtubedocs, removeNumbers)
+youtubedocs <- tm_map(youtubedocs, tolower)
+youtubedocs <- tm_map(youtubedocs, removeWords, stopwords("english"))
+youtubedocs <- tm_map(youtubedocs, removeWords, c("none", "just", "video", "videos", "dont"))
+youtubedocs <- tm_map(youtubedocs, stemDocument)
+youtubedocs <- tm_map(youtubedocs, stripWhitespace)
+youtubedocs <- tm_map(youtubedocs, PlainTextDocument)
+youtubetdm <-TermDocumentMatrix(youtubedocs)
+youtubetdm
+
+youtubetdm2 <- removeSparseTerms(youtubetdm, .5)
+ytfreq <- rowSums(as.matrix(youtubetdm2))
+findFreqTerms(youtubetdm2, lowfreq = 100)
+
+library(wordcloud)
+library(ggplot2)
+
+findFreqTerms(youtubetdm2, lowfreq = 25)
+
+wordcloud(names(ytfreq), ytfreq, min.freq = 25, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))
+
+findAssocs(youtubetdm2, c("ellen", "fallon","blacklist"), corlimit = .7)
+
+youtubedtm3 <-DocumentTermMatrix(youtubedocs)
+youtubedtm3 <-removeSparseTerms(youtubedtm3, .05)
+dendo <- dist(t(youtubedtm3), method="euclidean")
+cluster <- hclust(d=dendo, method="ward.D")
+plot(cluster, hang=-1)
+ytgroups <- cutree(cluster, k=5)
+rect.hclust(cluster, k=5, border="orange")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+require(jsonlite)
+require(RJSONIO)
+library(twitteR)
+setup_twitter_oauth(consumer_key="wbdsG281qlnMrz0QzrTdKXbrX", consumer_secret="YWqw0UyEwA7YsSsETRAfoCUbeDud7viYOtlPx5gvjj3VA9602d", access_token = "3066551830-An3wIGONkTeGiVNaRDP4KYmYCruZzoectzjqr4R", access_secret = "rk2UlidRQZ3M9e6Li3QsdlfM2r3G1lsNGjR5UKEGhIcA8")
+tweets = searchTwitter("#blacklist")
+tweets2 <- do.call("rbind", lapply(tweets, as.data.frame))
+tweetsDF <- data.frame(tweets2$text, stringsAsFactors = FALSE)
+iconv(tweetsDF,"WINDOWS-1252","UTF-8")
+tweetsDF=str_replace_all(tweetsDF,"[^[:graph:]]", " ")
+#change path for your local machine
+write.csv(tweetsDF, "/Users/digitalmarketer1977/Desktop/twitter/twitter.csv")
+
+#adjust file path for your local machine
+twitterfile<-file.path("~", "Desktop", "twitter")
+twitterdoc <- Corpus(DirSource(twitterfile))
+twitterdoc <- tm_map(twitterdoc, removeWords, c("blacklist", "blacklist!", "#blacklist"))
+twittertdm <-TermDocumentMatrix(twitterdoc)
+twittertdm
+twittertdm2 <- removeSparseTerms(twittertdm, .5)
+twitterfreq <- rowSums(as.matrix(twittertdm2))
+wordcloud(names(twitterfreq), twitterfreq, min.freq = 25, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))
+```
+
+Source: <a href=https://rstudio-pubs-static.s3.amazonaws.com/31867_8236987cf0a8444e962ccd2aec46d9c3.html>Basic Text Mining in R</a>
+
+Source: <a href=http://www.r-bloggers.com/getting-started-with-twitter-in-r/>Getting Started with Twitter in R</a>
+
+Reference: Automated Data Collection with R, Wiley (2015)

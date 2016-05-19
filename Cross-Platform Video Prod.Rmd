@@ -1,0 +1,158 @@
+---
+title: "Cross-Platform Video Prod"
+author: "Blandon Casenave"
+date: "May 19, 2016"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r, echo=FALSE}
+#Video Views Section
+# The fill argument was required for both of the data sets below, the first time I encountered the error scan message.
+
+AppVideoURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/ottmobile.csv"
+
+AppVideo <- read.csv(file = AppVideoURL, header = TRUE, sep = ",", strip.white = TRUE, na.strings = "", fill = TRUE)
+
+#remove extraneous observations n: 2371 -> 772.
+AppVideo <- AppVideo[AppVideo$FEP.Starts != "0",]
+
+#stringAsFactors set to false doesn't seem to convert vars to characters.
+AppVideo$Platform = as.character(AppVideo$Platform)
+AppVideo$Network = as.character(AppVideo$Network)
+AppVideo$Network<-tolower(AppVideo$Network)
+AppVideo$Program = as.character(AppVideo$Program)
+#discovered iconv, handy for web based data sources.
+AppVideo$Program <- iconv(AppVideo$Program,"WINDOWS-1252","UTF-8")
+AppVideo$Program<-tolower(AppVideo$Program)
+AppVideo$FEP.Starts = as.numeric(AppVideo$FEP.Starts)
+#Recoding work done here, tranformed character values, used levels as reference.
+#levels(AppVideo$Network)
+AppVideo$Network[AppVideo$Network=="nbcentertainment"] <- "NBC"
+AppVideo$Network[AppVideo$Network=="Telemundo Now"] <- "Telemundo"
+
+
+#App Video Data Frame
+AppVideoPlatform<-AppVideo$Platform
+AppVideoNetwork <- AppVideo$Network
+AppVideoProgram <- AppVideo$Program
+AppVideoStarts <- AppVideo$FEP.Starts
+AppVideoDF <- data.frame(AppVideoPlatform, AppVideoNetwork, AppVideoProgram, AppVideoStarts, row.names = NULL, check.rows = FALSE, stringsAsFactors = FALSE)
+
+
+BrowserVideoURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/browser.csv"
+BrowserVideo <- read.csv(file = BrowserVideoURL, header = TRUE, sep = ",", strip.white = TRUE, na.strings = "", fill = TRUE)
+
+#remove extraneous observations, n: 8331 -> 571.
+BrowserVideo <- BrowserVideo[BrowserVideo$FEP.Starts >= "2",]
+
+#stringAsFactors set to false doesn't seem to convert vars to characters.
+BrowserVideo$Platform = as.character(BrowserVideo$Platform)
+BrowserVideo$Network = as.character(BrowserVideo$Network)
+BrowserVideo$Network<-tolower(BrowserVideo$Network)
+BrowserVideo$Program = as.character(BrowserVideo$Program)
+#discovered iconv, handy for web based data sources.
+BrowserVideo$Program <- iconv(BrowserVideo$Program,"WINDOWS-1252","UTF-8")
+BrowserVideo$Program<-tolower(BrowserVideo$Program)
+BrowserVideo$FEP.Starts = as.numeric(BrowserVideo$FEP.Starts)
+
+#Recoding work done here, tranformed character values, used levels as reference.
+#levels(BrowserVideo$Network)
+BrowserVideo$Network[BrowserVideo$Network=="e"] <- "E!"
+BrowserVideo$Network[BrowserVideo$Network=="mun2"] <- "NBC Universo"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Bravo"] <- "Bravo"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - CNBC"] <- "CNBC"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - E!"] <- "E!"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Esquire"] <- "Esquire"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - MSNBC"] <- "MSNBC"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - NBC"] <- "NBC"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - NBC News"] <- "NBC News"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - NBC Universo"] <- "NBC Universo"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Oxygen"] <- "Oxygen"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Sports Network"] <- "Sports Network"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Sprout"] <- "Sprout"
+BrowserVideo$Network[BrowserVideo$Network=="NBCU TVE - Syfy"] <- "Syfy"
+
+BrowserVideo$Platform[BrowserVideo$Platform=="Mobile"] <- "HTML5"
+
+#Browser Video Data Frame
+BrowserVideoPlatform <-BrowserVideo$Platform
+BrowserVideoNetwork <- BrowserVideo$Network
+BrowserVideoProgram <- BrowserVideo$Program
+BrowserVideoStarts <- BrowserVideo$FEP.Starts
+BrowserVideoDF <- data.frame(BrowserVideoPlatform,BrowserVideoNetwork, BrowserVideoProgram, BrowserVideoStarts, stringsAsFactors = FALSE)
+
+#Network grouping using base R, dplyring functions not working.
+Browsergroup <-(aggregate(BrowserVideoStarts ~ BrowserVideoNetwork, BrowserVideoDF, sum))
+Appgroup <-(aggregate(AppVideoStarts ~ AppVideoNetwork, AppVideoDF, sum))
+Browsergroup <- Browsergroup[order(-Browsergroup$BrowserVideoStarts),]
+Appgroup <-Appgroup[order(-Appgroup$AppVideoStarts),]
+
+
+Videomerge <- merge(x=Browsergroup, y=Appgroup, by.x = 'BrowserVideoNetwork', by.y = 'AppVideoNetwork')
+AllVideoStarts <-(Videomerge$BrowserVideoStarts +Videomerge$AppVideoStarts)
+AllVideoNetworks <-Videomerge$BrowserVideoNetwork
+AllVideoDF <- data.frame(AllVideoNetworks, AllVideoStarts, stringsAsFactors = FALSE)
+AllVideoDF <-(aggregate(AllVideoStarts ~ AllVideoNetworks, AllVideoDF, sum))
+AllVideoDF <-AllVideoDF[order(-AllVideoDF$AllVideoStarts),]
+#Browsergroup
+#Appgroup
+#AllVideoDF
+
+#Platform grouping using base R
+Browserplat <-(aggregate(BrowserVideoStarts ~ BrowserVideoPlatform, BrowserVideoDF, sum))
+Appplat <-(aggregate(AppVideoStarts ~ AppVideoPlatform, AppVideoDF, sum))
+Browserplat <- Browserplat[order(-Browserplat$BrowserVideoStarts),]
+Appplat <-Appplat[order(-Appplat$AppVideoStarts),]
+
+Videoplat <-merge(x=Appplat, y=Browserplat, by.x='AppVideoPlatform', by.y='BrowserVideoPlatform', all = TRUE)
+Videoplat$AppVideoStarts<-ifelse(is.na(Videoplat$AppVideoStarts), 0, Videoplat$AppVideoStarts)
+Videoplat$BrowserVideoStarts<-ifelse(is.na(Videoplat$BrowserVideoStarts), 0, Videoplat$BrowserVideoStarts)
+AllPlatStarts <-(Videoplat$BrowserVideoStarts + Videoplat$AppVideoStarts)
+AllPlat <-(Videoplat$AppVideoPlatform)
+AllPlatDF <- data.frame(AllPlat, AllPlatStarts, stringsAsFactors = FALSE)
+AllPlatDF <-AllPlatDF[order(-AllPlatDF$AllPlatStarts),]
+
+#Top 25 Program Data Frame
+Browserprogram <-(aggregate(BrowserVideoStarts ~ BrowserVideoProgram, BrowserVideoDF, sum))
+Appprogram <-(aggregate(AppVideoStarts ~ AppVideoProgram, AppVideoDF, sum))
+Browserprogram <- Browserprogram[order(-Browserprogram$BrowserVideoStarts),]
+Appprogram <-Appprogram[order(-Appprogram$AppVideoStarts),]
+
+Videoprogram <-merge(x=Appprogram, y=Browserprogram, by.x='AppVideoProgram', by.y='BrowserVideoProgram', all = TRUE)
+Videoprogram$AppVideoStarts<-ifelse(is.na(Videoprogram$AppVideoStarts), 0, Videoprogram$AppVideoStarts)
+Videoprogram$BrowserVideoStarts<-ifelse(is.na(Videoprogram$BrowserVideoStarts), 0, Videoprogram$BrowserVideoStarts)
+AllProgStarts <-(Videoprogram$BrowserVideoStarts + Videoprogram$AppVideoStarts)
+AllProg <-(Videoprogram$AppVideoProgram)
+AllProgDF <- data.frame(AllProg, AllProgStarts, stringsAsFactors = FALSE)
+AllProgDF <-AllProgDF[order(-AllProgDF$AllProgStarts),]
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+#Barplots for each data set
+barplot(AllVideoDF$AllVideoStarts, col = "gray", main = "All Views by Network", xlab = "Video Starts", border = "blue", horiz = FALSE, beside = TRUE, names.arg = AllVideoDF$AllVideoNetworks, cex.names = .6, cex.axis = .6, las=2)
+
+barplot(AllPlatDF$AllPlatStarts, col = "blue", main = "All Views by Platform", xlab = "Video Starts", border = "red", horiz = FALSE, beside = TRUE, names.arg = AllPlatDF$AllPlat, cex.names = .6, cex.axis = .6, las=2)
+
+barplot(head(AllProgDF$AllProgStarts, n=10), col = "red", main = "Top 25 Programs", xlab = "Video Starts", border = "blue", horiz = FALSE, beside = TRUE, names.arg = head(AllProgDF$AllProg, n=10), cex.names = .6, cex.axis = .6, las=2)
+```
+
+<b>Function Reference Section:</b>
+
+fill argument to help read.table execute<br>
+Source: <a href=http://stackoverflow.com/questions/18161009/error-in-reading-in-data-set-in-r>Stack Overflow Posting on Error in Reading in Data Set</a>
+
+iconv function to handle bad characters<br>
+Source: <a href=http://stackoverflow.com/questions/13187605/error-in-tolower-invalid-multibyte-string>Stack Overflow Posting on Invalin Multibyte String</a>
+
+full join using base merge<br>
+Source: <a href=http://www.r-bloggers.com/joining-data-frames-in-r/>R-Bloggers</a>
+
+addtional cleaning of NA
+Source: <a href=http://stackoverflow.com/questions/2613420/handling-missing-incomplete-data-in-r-is-there-function-to-mask-but-not-remove>Stack Overflow</a>

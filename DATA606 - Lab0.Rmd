@@ -1,0 +1,52 @@
+---
+title: "DATA606  Lab0"
+author: "Blandon Casenave"
+date: "September 2, 2016"
+output: pdf_document
+---
+
+
+```{r, echo=TRUE, warning=FALSE,fig.align='center'}
+#Note: when running in the console "lab/more/present.R" path is required.
+source("more/present.R")
+present
+dim(present)
+names(present)
+```
+
+Q1 - What are the years present in this data set?
+```{r, echo=TRUE, warning=FALSE, fig.align='left'}
+min(present$year)
+max(present$year)
+```
+It's the years from 1940 - 2002.
+
+What are the dimensions of the data frame?
+```{r, echo=TRUE, warning=FALSE, fig.align='left'}
+dim(present)
+```
+What are the variable column names?
+```{r, echo=TRUE, warning=FALSE, fig.align='left'}
+names(present)
+```
+
+Q2 - How do these counts compare to Arbuthnot's? Are they on a similar scale?
+
+No, the number of observations are relatively close (63 vs 82), and the number of variables are the same (three), the actual scale or size of the data is much larger in the present data set because the population it self is much bigger.
+
+Q3 - Make a plot that displays the boy-to-girl ratio for ever year in the data set. Does Arbuthnot's observation about boys being born in greater proportion than girls hold up in the US? Include the plot in your response.
+
+```{r, echo=TRUE, warning=FALSE, fig.align='left'}
+ratio <- (present$boys/present$girls)
+mean(ratio)
+plot(present$year, ratio)
+```
+
+The average ratio (1.05) of boys to girls does indicate that Arbuthnot's observation also holds true in the US. You can see the calculation and plot above. 
+
+Q4 - In what year did we see the most number of births in the US? 1961
+
+```{r, echo=TRUE, warning=FALSE, fig.align='left'}
+present[which.max(present$boys+present$girls),]
+```
+

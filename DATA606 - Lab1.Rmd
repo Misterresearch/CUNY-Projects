@@ -1,0 +1,66 @@
+---
+title: "DATA606 - Lab1"
+author: "Blandon Casenave"
+date: "September 3, 2016"
+output: pdf_document
+---
+
+```{r, echo=FALSE,warning=FALSE,fig.align='center'}
+library(IS606)
+source("more/cdc.R")
+```
+
+Q1 - Make a scatterplot of weight versus desired weight. Describe the relationship between these two variables.
+
+```{r, echo=FALSE,warning=FALSE,fig.align='center'}
+ plot(cdc$weight, cdc$wtdesire)
+```
+
+The desired weight is what people want to weight, The weight variable is the observed weight of each respondent. 
+
+Q2 - Create new variable that is the difference between weight and desired weight.
+
+```{r, echo=TRUE,warning=FALSE,fig.align='center'}
+wdiff <- (cdc$wtdesire - cdc$weight)
+```
+
+Q3 - What type of data is wdiff? If an observation wdiff is O what does that mean? What about negative and positive?
+
+```{r, echo=TRUE,warning=FALSE,fig.align='center'}
+is.numeric(wdiff)
+```
+
+wdiff has a data type of numeric/integer. If an observation of 0 means the person has a weight that is exactly what their perceived ideal is (wdiff = 0). If the desire between (wtdesire - weight) is positive, that means the person may have negative perception of themselves - they may perceive themsleves to be heavier than they actually are. If the difference is negative, then the person perceives themself to be too heavy.
+
+Q4 - Describe the distribution of wdiff, what does it mean.
+
+```{r, echo=FALSE,warning=FALSE,fig.align='center'}
+hist(wdiff)
+```
+
+From the histogram above, it appears that most people seem to find themselves mildly too heavy, as the largest bar is slightly negative, but still close to zero. The shape here is similar to the "bell curve", and appears to be (almost) normally distributed about the mean.
+
+Q5 - Using numerical summaries and a side-by-side box plot, determine if men tend to view their weight differently than women.
+
+```{r, echo=TRUE,warning=FALSE,fig.align='center'}
+mwdiff <- subset(wdiff, cdc$gender == "m")
+fwdiff <- subset(wdiff, cdc$gender == "f")
+summary(mwdiff)
+summary(fwdiff)
+boxplot(wdiff ~ cdc$gender)
+```
+
+The data show, based on the median and average values for mwdiff that both men and women see themselves as overweight; but women see themselves are more so at almost double the amount. Men see themselves as at almost 11 pounds overweight on average, while women reporting about 18 pounds. 
+
+Q6- Now it’s time to get creative. Find the mean and standard deviation of weight and determine what proportion of the weights are within one standard deviation of the mean.
+
+```{r, echo=TRUE,warning=FALSE,fig.align='center'}
+mean(cdc$weight)
+sd(cdc$weight)
+lowsdweight <- mean(cdc$weight) - sd(cdc$weight)
+hisdweight <- mean(cdc$weight) + sd(cdc$weight)
+normal1 <- length(cdc$weight[(cdc$weight > lowsdweight) & (cdc$weight < hisdweight)])
+normal1/length(cdc$weight)
+```
+
+Undoubtedly there's a function to calcluate what portion of this distribution falls within one standard deviation on the mean, but I used what came to mind in the code lines above. In short with a mean of ~170, and a standard deviation of ~40 it seems that 71% of our observations fall within one standard deviation of the mean...making it close to normally distributed (68%). 

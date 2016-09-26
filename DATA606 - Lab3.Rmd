@@ -1,0 +1,103 @@
+---
+title: "DATA606 - Lab3"
+author: "Blandon Casenave"
+date: "September 21, 2016"
+output: pdf_document
+---
+
+---PRACTICE---
+```{r, echo=FALSE, fig.align='center'}
+download.file("http://www.openintro.org/stat/data/bdims.RData", destfile = "bdims.RData")
+load("bdims.RData")
+head(bdims)
+mdims <- subset(bdims, sex == 1)
+fdims <- subset(bdims, sex == 0)
+
+#Men's Height
+hist(mdims$hgt, main="Male Height Histogram", xlab="Height",border="blue", col="green", xlim=c(150,200),probability = TRUE)
+#Women's Height
+hist(fdims$hgt, main="Female Height Histogram", xlab="Height",border="red", col="blue", xlim=c(145,185),probability = TRUE)
+fhgtmean <- mean(fdims$hgt)
+fhgtsd   <- sd(fdims$hgt)
+#Density Histogram dnorm
+x <- 145:185
+y <- dnorm(x = x, mean = fhgtmean, sd = fhgtsd)
+lines(x = x, y = y, col = "blue")
+
+#Q-Q Plot
+qqnorm(fdims$hgt)
+qqline(fdims$hgt)
+
+#Simulate Normal Distribution & Compare 
+sim_norm <- rnorm(n = length(fdims$hgt), mean = fhgtmean, sd = fhgtsd)
+qqnorm(sim_norm)
+qqline(sim_norm)
+
+#qqnormsim(fdims$hgt)
+
+# Comparing Z table values to observed data set
+1 - pnorm(q = 182, mean = fhgtmean, sd = fhgtsd)
+sum(fdims$hgt > 182) / length(fdims$hgt)
+
+```
+---PRACTICE---
+
+---GRADED EXERCISES---
+
+Q1
+
+a. The histogram for female biiliac (pelvic) diameter (bii.di) belongs to normal probability plot letter___.
+
+Answer = B
+
+```{r, echo=FALSE, fig.align='center'}
+qqnorm(fdims$bii.di)
+qqline(fdims$bii.di)
+```
+
+b. The histogram for female elbow diameter (elb.di) belongs to normal probability plot letter ____.
+
+Answer = C
+
+```{r, echo=FALSE}
+qqnorm(fdims$elb.di)
+qqline(fdims$elb.di)
+```
+
+
+c. The histogram for general age (age) belongs to normal probability plot letter ____.
+
+Answer = D
+
+```{r, echo=FALSE, fig.align='center'}
+qqnorm(bdims$age)
+qqline(bdims$age)
+```
+
+d. The histogram for female chest depth (che.de) belongs to normal probability plot letter ____.
+
+Answer = A
+
+```{r, echo=FALSE, fig.align='center'}
+qqnorm(fdims$che.de)
+qqline(fdims$che.de)
+```
+
+Q2 
+
+Note that normal probability plots C and D have a slight stepwise pattern. Why do you think this is the case?  
+
+Answer: As noted in the study, this may be because the data isn't from a random sample, so data at the extremities my be more prone to deviate from the expected means more so than in the center.
+
+Q3 
+
+As you can see, normal probability plots can be used both to assess normality and visualize skewness. Make a normal probability plot for female knee diameter (kne.di). Based on this normal probability plot, is this variable left skewed, symmetric, or right skewed? Use a histogram to confirm your findings.
+
+Answer: The data is right skewing, see plot and histogram below
+```{r, echo=FALSE, fig.align='center'}
+qqnorm(fdims$kne.di)
+qqline(fdims$kne.di)
+
+hist(fdims$kne.di, main="Female Knee Diameter", xlab="Height",border="red", col="grey", xlim=c(15,25),probability = TRUE)
+```
+

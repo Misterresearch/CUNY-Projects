@@ -1,0 +1,71 @@
+---
+title: "DATA606 - Lab4a"
+author: "Blandon Casenave"
+date: "10/7/2016"
+output: pdf_document
+---
+
+```{r, echo=FALSE}
+#install.packages(c('openintro','OIdata','devtools','ggplot2','psych','reshape2','knitr','markdown','shiny'))
+
+#devtools::install_github("jbryer/IS606")
+#library(IS606)
+#startLab('Lab4a')
+#add Lab4a to folder path in console
+#load("Lab4a/more/ames.RData")
+```
+```{r, echo=FALSE,warning=FALSE, fig.align='center'}
+amesURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/ames2000_NAfix.csv"
+ames <- read.csv(amesURL, header = TRUE, sep = ",")
+```
+
+
+```{r, echo=FALSE,warning=FALSE, fig.align='center'}
+area <- ames$Gr.Liv.Area
+price <- ames$SalePrice
+summary(area)
+hist(area, main = "Residential Home Sales", border = "blue", col = "red")
+```
+
+Q1 - Take a random sample of size 50 from price. Using this sample, what is your best point estimate of the population mean?
+
+```{r, echo=FALSE,warning=FALSE, fig.align='center'}
+sampleprice <- sample(price, 100)
+mean(sampleprice)
+```
+
+Q2 - Since you have access to the population, simulate the sampling distribution for x¯pricex¯price by taking 5000 samples from the population of size 50 and computing 5000 sample means. Store these means in a vector called sample_means50. Plot the data, then describe the shape of this sampling distribution. Based on this sampling distribution, what would you guess the mean home price of the population to be? Finally, calculate and report the population mean.
+
+Q3 - Change your sample size from 50 to 150, then compute the sampling distribution using the same method as above, and store these means in a new vector called sample_means150. Describe the shape of this sampling distribution, and compare it to the sampling distribution for a sample size of 50. Based on this sampling distribution, what would you guess to be the mean sale price of homes in Ames?
+
+Q4 - Of the sampling distributions from 2 and 3, which has a smaller spread? If we’re concerned with making estimates that are more often close to the true value, would we prefer a distribution with a large or small spread?
+
+-- Q2-4 are answered in the same code chunk below --
+
+```{r, echo=TRUE,warning=FALSE, fig.align='center'}
+sample_means50 <- rep(NA, 5000)
+sample_means150 <- rep(NA, 5000)
+
+for(i in 1:5000){
+  samp <- sample(price, 50)
+  sample_means50[i] <- mean(samp)
+}
+for(j in 1:5000){
+  samp <- sample(price, 150)
+  sample_means150[j] <- mean(samp)
+}
+hist(sample_means50, main = "Sample Means 50", border = "red", col = "blue")
+qqnorm(sample_means50, main = "Means 50 Norm Plot",col = "blue")
+mean(sample_means50)
+
+hist(sample_means150, main = "Sample Means 150", border = "blue", col = "grey")
+qqnorm(sample_means150, main = "Means 150 Norm Plot",col = "yellow")
+mean(sample_means150)
+
+mean(price)
+hist(area, main = "Sales Price Pop", border = "blue", col = "red")
+```
+
+Based on the data and plots above (histogram and QQPlot), the sample appears to be normally distributed, independent because it's multiple samples of less than 10% of the population with an n above 30. The sample mean of the first sample is that's repeated 5000 times is $180,462. The population mean is $180,249. (Q3) When changing the sample size to 150, the mean price becomes $180,289.  The sampling distribution of sample_means150 is not as wide as sample_means50, but it is still appears normal and is independent. 
+
+Although both samples produce point estimates that are sufficiently close to the population mean, the larger sample in this case produces a mean that is more precise and that has a smaller spread.The smaller spread is more desirable, because it means less variability between samples. 

@@ -1,0 +1,64 @@
+---
+title: "DATA606Casenave - Lab4b"
+author: "Blandon Casenave"
+date: "10/8/2016"
+output: pdf_document
+---
+
+<br>----------- PRACTICE EXERCISE ONLY-----------<br/>
+```{r, echo=TRUE,warning=FALSE, fig.align='center'}
+amesURL <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/ames2000_NAfix.csv"
+ames <- read.csv(amesURL, header = TRUE, sep = ",")
+load("more/ames.RData")
+#Exercise 1
+population <- ames$Gr.Liv.Area
+samp <- sample(population, 60)
+sample_mean <- mean(samp)
+summary(samp)
+
+
+#R Code for SE, lower/upper CI Limit
+se <- sd(samp) / sqrt(60)
+lower <- sample_mean - 1.96 * se
+upper <- sample_mean + 1.96 * se
+c(lower, upper)
+
+#Create empty vector
+samp_mean <- rep(NA, 50)
+samp_sd <- rep(NA, 50)
+n <- 60
+
+#Create loop many sample means and sd
+for(i in 1:50){
+  samp <- sample(population, n) # obtain a sample of size n = 60 from the population
+  samp_mean[i] <- mean(samp)    # save sample mean in ith element of samp_mean
+  samp_sd[i] <- sd(samp)        # save sample sd in ith element of samp_sd
+}
+
+#CI vector 
+#Lastly, we construct the confidence intervals.
+
+lower_vector <- samp_mean - 1.96 * samp_sd / sqrt(n) 
+upper_vector <- samp_mean + 1.96 * samp_sd / sqrt(n)
+
+c(lower_vector[1], upper_vector[1])
+```
+
+
+<br>----------------- LAB 4b PROBlEMS BELOW------------------<br/>
+
+Q1 - The plot below shows how instances of the sampled mean are more than two standard deviations (1.96) from the mean, where as the CI, say 95% refers to how many observartions are more than 1.96 deviations from the mean. These numbers will not match because we're not measuring the exact same thing.  So in this case 2 of the 50 sampled means are outside the range or 96%, approximately, but not the exact same as our 95%.  
+```{r, echo=TRUE,warning=FALSE, fig.align='center'}
+plot_ci(lower_vector, upper_vector, mean(population))
+```
+
+Q2 - The Z critical value for a 99% CI is 2.58
+
+Q3 - See the output below, similar to Q1, we see that 1 out of the 50 sampled means values outside of the range or 98% - almost but not the exact same as our 99% CI. 
+```{r, echo=TRUE,warning=FALSE, fig.align='center'}
+lower_vectorA <- samp_mean - 2.58 * samp_sd / sqrt(n) 
+upper_vectorA <- samp_mean + 2.58 * samp_sd / sqrt(n)
+
+c(lower_vectorA[1], upper_vectorA[1])
+plot_ci(lower_vectorA, upper_vectorA, mean(population))
+```

@@ -1,0 +1,313 @@
+---
+title: "DATA605 - Real Estate Competition"
+author: "Blandon Casenave"
+date: "5/17/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+```
+
+```{r, echo=FALSE,warning=FALSE}
+library(dtplyr)
+library(caret)
+library(pROC)
+library(MASS)
+library(data.table)
+library(prob)
+library(car)
+library(Hmisc)
+library(ggplot2)
+library(reshape2)
+library(dummies)
+library(moments)
+
+#please connect to wifi
+reeval <- "https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/retest.csv"
+
+retrain <-"https://raw.githubusercontent.com/Misterresearch/CUNY-Projects/master/retrain.csv"
+  
+reeval <- read.table(file = reeval, header = TRUE, sep = ",", na.strings = c("","NA"))
+
+retrain <- read.table(file = retrain, header = TRUE, sep = ",", na.strings = c("","NA"))
+
+```
+
+\newpage
+
+**PART I(a)**
+\newline
+Pick one of the quantitative independent variables from the training data set (train.csv) , and define that variable as  X.   Pick SalePrice as the dependent variable, and define it as Y for the next analysis.   
+Probability.   Calculate as a minimum the below probabilities a through c.  Assume the small letter "x" is estimated as the 4th quartile of the X variable, and the small letter "y" is estimated as the 2nd quartile of the Y variable.  
+
+*Probability must be between 0 and 1*
+```{r, echo=FALSE, warning=FALSE}
+
+X <- retrain$LotArea
+quantile(X, c(.25, .5, .75,1))
+x <- quantile(X, 1)
+x
+
+Y <- retrain$SalePrice
+quantile(Y, c(.25,.5,.75,1))
+y <- quantile(Y, .5)
+y<-round(y, digits = 2)
+
+#Probability of x
+Px<-ecdf(retrain$LotArea)(x)
+Px
+
+#Probability of y
+Py<-ecdf(retrain$SalePrice)(y)
+Py
+
+#Probability of X greater than x
+1-Px
+#Probability of X greater than x
+1-Py
+#Probability of X less than x
+Px
+```
+
+Interpret the meaning of all probabilities.  
+
+a.	 P(X>x | Y>y)	
+
+The CONDITIONAL PROBABILITY that an observation of X is greater than the 4th quartile, GIVEN THAT an observation of Y is greater than the 2nd quartile
+
+(P(X>x), P(Y>y))/P(Y>y) = (0*.5)/.5 = 0
+
+b.  P(X>x, Y>y)		
+
+The JOINT PROBABILITY that an observation of X is greater than the fourth quartile AND that an observation of Y is greater than the 2nd quartile
+
+(P(X>x), P(Y>y)) = (0*.5) = 0
+
+c.  P(X<x | Y>y)
+
+The CONDITIONAL PROBABILITY that an observation of X is less than the 4th quartile, GIVEN THAT an observation of Y is greater than the 2nd quartile
+
+(P(X<x), P(Y>y))/P(Y>y) = (1*.5)/.5 = 1
+
+
+**PART I(b)**
+\newline
+Does splitting the training data in this fashion make them independent? In other words, does P(X|Y)=P(X)P(Y))?
+*ANSWER*
+\newline
+In this case the results are independent in each of these cases because the resulting probabilities are exactly 0 or 1. The probabilities of X were locked at 0 or 1 and the value of y did nothing to alter the conditional and joint statements. However, the results here are useless because you're not actually splitting the training set.
+
+The training set should be split by a simple random sample(SRS)\footnote{\url{https://www.mff.cuni.cz/veda/konference/wds/proc/pdf10/WDS10_105_i1_Reitermanova.pdf}}or by some other method that balances bias and variance in the split that will become the test/eval data set.
+\newline
+Check mathematically, and then evaluate by running a Chi Square test for association.  You might have to research this.
+\newline
+*ANSWER*
+Based on the results below, we have a p-value (.92) from our chi-square test that confirms our answers above...we cannot reject the null hypothesis that observing a value above or below the 4th quantile of "x"is independent from "y" (it's actually impossible to have a value above the 4th quantile (0%), 100% likely to have one below)\footnote{\url{http://www.r-tutor.com/elementary-statistics/goodness-fit/chi-squared-test-independence}}.
+
+```{r,echo=FALSE}
+xbin<-cut2(X, g=1)
+ybin<-cut2(Y, g=2)
+bintbl<-table(ybin,xbin)
+bintbl
+#Chi Sq check between STARS & Label
+chisq.test(bintbl)
+```
+\newpage
+
+**Part II**
+\newline
+Descriptive and Inferential Statistics. Provide univariate descriptive statistics and appropriate plots for both variables. Provide a scatterplot of X and Y. Transform both variables simultaneously using Box-Cox transformations. You might have to research this. Using the transformed variables, run a correlation analysis and interpret. Test the hypothesis that the correlation between these variables is 0 and provide a 99% confidence interval. Discuss the meaning of your analysis.
+
+
+*ANSWER*
+There was some slight right skew in the Y variable, and what looks like a Poisson Distribution in the X variable. The Box-Cox transformation \footnote{\url{https://www.rdocumentation.org/packages/car/versions/2.1-4/topics/bcPower}} gives us normal distribution for both variable, allowing us to perform a correlation analysis for these two variables.
+\newline
+Based on the p-values in the hypothesis test below (.00) we can reject the null hypothesis that the difference between these two values is 0. 
+
+```{r, echo=TRUE}
+
+#Descriptive Stats & Graphs
+summary(X)
+summary(Y)
+hist(X)
+hist(Y)
+plot(X,Y)
+
+#box-cox simultaneous transformation
+simpleSales <- data.frame(X,Y)
+bcsimpleSales<-bcPower(simpleSales, c(0,0), jacobian.adjusted = FALSE, gamma = NULL)
+bcX<-bcsimpleSales$`X^0`
+hist(bcX)
+bcY<-bcsimpleSales$`Y^0`
+hist(bcY)
+
+#correlation between box-cox transformed variables
+simpleSalesbc<-data.frame(bcX, bcY)
+bcSalesCor <-cor(simpleSalesbc, use = "na.or.complete")
+bcSalesCor
+
+#Hypothesis Test
+t.test(bcX, bcY,conf.level = .99)
+```
+\newpage
+
+**Part III**
+\newline
+Linear Algebra and Correlation. Invert your correlation matrix from the previous section. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix.
+
+*ANSWER*
+The results below are the same, regardless of the order of multiplication because both matrices are scalars - squares matrices with the same values along its diagonal\footnote{\url{https://people.richland.edu/james/lecture/m116/matrices/operations.html}}.
+
+```{r, echo=TRUE}
+
+bcprecision<-solve(bcSalesCor)
+bcprecision
+
+bcSalesCor %*% bcprecision
+bcprecision %*% bcSalesCor
+```
+\newpage
+
+**PART IV**
+\newline
+Calculus-Based Probability & Statistics. Many times, it makes sense to fit a closed form distribution to data. For your non-transformed independent variable ( X ), location shift it so that the minimum value is above zero. Then load the MASS package and run fitdistr to fit a density function of your choice. (See https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ). Find the optimal value of the parameters for this distribution, and then take 1000 samples from this distribution (e.g., rexp(1000, ???) for an exponential). Plot a histogram and compare it with a histogram of your non-transformed original variable.
+
+*ANSWER*
+There are a few of criteria used to determine what kind of distribution showed be used for a data set. For the X variable in this data set, given that we're looking at non-zero, integers the case could be made for a negative binomial distribution (NB). And within that one thing to consider is whether or not use the Poisson, distribution - which is a special case of the NB. The criteria for deciding on whether the or not to use Poisson is determined by whether or not the mean is equal to the variance. If the mean of our chosen variable is equal to the variance than we should use the Poisson distribution, if the variance is higher then we choose the NB.  The variance for our X (Retrain$LotArea) is 996,255,650, and the mean is 10,516, verifying that we should go with the NB distribution. Using a theta value of 3.49, which determines the shape of the curve(shape parameter), which was generated as the size parameter by the by our sampling function rnegbin\footnote{\url{https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/rnegbin.html}} the shape loosely fits the actual histogram for X. However, when we shrink theta to ".01"...essentially approaching 0, as h does in a derivative the shape of the curve begins to resemble of actual data set.   
+
+```{r, echo=TRUE}
+
+#Test condition for distribution 
+mean(X)
+var(X)
+
+#auto NB fit
+fitnb<-fitdistr(X, densfun = "negative binomial")
+hist(rnegbin(1000, fitnb$estimate[2], fitnb$estimate[1]))
+
+#small theta NB 
+hist(rnegbin(1000, fitnb$estimate[2], .01))
+
+#original variable without transformation
+hist(X)
+
+```
+\newpage
+
+**Part V**
+\newline
+Modeling. Build some type of regression model and submit your model to the competition board. You can use as many variables as you like. Provide your complete model summary and results with analysis
+
+*ANALYSIS*
+\newline
+For this data set we decided to stick with a linear regression model, with multiple explanatory variables. There are number of categorical variables, that need to be transformed. This process has increased our overall variable count from 80 to 306(k), with 1460 observations(n). We're also able to see that practically all of the variables in this model have a substantial amount of skew in them.  A model that is this wide runs the risk of multicollinearity (among other issues). In fact our full model (relm) yields and adjusted $R^2$=.92. This artificially inflated $R^2$ value, along with unexpected coefficient signs all are common signs that our suspicion of multicollinearity is in fact present. At this point we will need to find some means of removing extraneous variables from our model. 
+
+There are a few functions in R that are designed to actually help build an optimal model, by using forward or backward variable selection - such as step() and regsubsets(). However, given the sheer size of our variable set - both of these function failed to execute (I'm not connected to R server). Therefore for this very wide data set, more manual methods that rely on correlation matrices and iterative selection based on p-values will be applied here.
+
+Subsetting was then applied to our full model (relm), that pulled out only those variables that had significant p-values at the 95% CI level (.05), and then a new linear model was created (myremodel). Our new model trimmed our explanatory variables down from 306 to 44 and had an adjusted $R^2$=.87, however there is still apparent multicollinearity in the model given some of the unexpected coefficient signs. For example, there's no reason that a pool in excellent condition (PoolQC.Ex) should negatively correlate to Sale Price. 
+
+Again the variables from our second model (myremodel) were pulled out, but this time put into a correlation matrix. Using the findCorrelation() function, any two variables that had a correlation of .6 were identified, and subsequently removed from what would be our third model (myremodelA). Our third model (myremodelA), now has the 32 explanatory variables and the adjusted $R^2$ held steady at .87- but indications of multicollinearity still persist. Running our correlation matrix again and removing variables that had a an absolute Pearson's R value of .6 or higher, yielded yet another model (myremodelB) with 28 explanatory variables and an $R^2$=.84 - but again the same indications of multicollinearity existed - unexpected coefficient signs. 
+
+The persistence of multicollinearity is largely happening on our dummy variables, which makes sense that different values within our original categorical variables would have high correlations. As a result, my fifth and final linear model (finalLM) which is the result of manual curation, contains 11 variables with an adjusted $R^2$=.74, without any apparent signs of mutlitcollinearity. The only apparent issue here is that we have a negative intercept, likely the result of applying a linear model to what could be considered a count dependent variable. However, it's generally accepted that intercept values can be nonsensical in regression models, especially when attempts at remediation result in more serious complications. 
+
+For example, attempts at log transforming our Y variable resulted in an unexpected sign for Exter.Qual.Ex - it went from positive to negative although the intercept became positive. There's no reason to think that excellent exterior quality would negative correlate to price. Also, given the substantial amount of skew and kurtosis we initially detected, I attempted to run a glm model using a "log" transformation (finalGLM) - however there were unexpected coefficient signs in that model as well. 
+
+Therefore, my final model is "finalLM", it contains 11 variables with an adjusted $R^2$=.74. Other than a negative intercept, all of the coefficient signs are as expected and all except one variable (GarageQual.Ex) is statistically significant at a 95% CI level. 
+
+Running the final model (finalLM) against the test data (reevald) set, it was discovered that our variable that was found not to be significant (GarageQual.Ex), was actually not in our test data set after dummy variable transformation, as a result we dropped it again from our model.   
+
+Then using the predict function we were able to fit our final model (finalLM) to our test data set with (1459 rows of data), We also used imputation based on the mean to fill in NA observations. At a high-level we generated means that were close to our original data set ($179K vs. $181K), also notice that the IQR is virtually identical betweem the two data sets ($82K vs. $84K). 
+
+```{r, echo=TRUE}
+
+#create dummy variables from categorical data
+retraind<-dummy.data.frame(retrain, sep=".", omit.constants = FALSE)
+reevald<-dummy.data.frame(reeval, sep=".", omit.constants = FALSE)
+
+#check for skew and kurtosis
+myskew<-lapply(retraind, skewness)
+myskew<-(t(data.frame(myskew)))
+mykurtosis<-lapply(retraind, kurtosis)
+mykurtosis<-(t(data.frame(mykurtosis)))
+mydistribution<-data.frame(myskew,mykurtosis[,1])
+
+#initial full model, manual backward selection.
+relm<-lm(SalePrice ~ ., data = retraind)
+#summary(relm)
+lmcoefficients<-data.frame(summary(relm)$coefficients)
+lmselected <- lmcoefficients[ which(lmcoefficients$Pr...t..<.05 & row.names(lmcoefficients)!="(Intercept)"),]
+row.names(lmselected)
+newVars<-row.names(lmselected)
+
+#generic formula function
+myfmla <- as.formula(paste("SalePrice ~ ", paste(newVars, collapse= "+")))
+myremodel<-lm(myfmla, data = retraind, na.action=na.omit)
+summary(myremodel)
+
+
+newmatrix<-model.frame(myfmla, data = retraind,subset = NULL, na.action = na.omit, drop.unused.levels = FALSE, xlev = NULL)
+recortb<-data.matrix(cor(newmatrix, method = "pearson"))
+findCorrelation(recortb, cutoff = .5, verbose = TRUE, names = TRUE)
+#chart.Correlation(recortb, histogram = TRUE)
+
+lmcoefficientsA<-data.frame(summary(myremodel)$coefficients)
+lmselectedA <- lmcoefficientsA[ which(lmcoefficientsA$Pr...t..<.05 & row.names(lmcoefficientsA)!="(Intercept)"),]
+row.names(lmselectedA)
+newVarsA<-row.names(lmselectedA)
+
+myfmlaA <- as.formula(paste("SalePrice ~ ", paste(newVarsA, collapse= "+")))
+myremodelA<-lm(myfmlaA, data = retraind, na.action=na.omit)
+summary(myremodelA)
+
+newmatrixA<-model.frame(myfmlaA, data = retraind,subset = NULL, na.action = na.omit, drop.unused.levels = FALSE, xlev = NULL)
+recortbA<-data.matrix(cor(newmatrixA, method = "pearson"))
+findCorrelation(recortbA, cutoff = .6, verbose = TRUE, names = TRUE)
+
+#drop PoolQC.Gd col32
+#drop MiscFeature.TenC col33
+#drop GarageCond.Ex col28
+#drop LandSlope.Mod col5
+
+#fourth model
+newmatrixB<-newmatrixA[c(-5,-28,-32,-33)]
+X1<-as.matrix(cbind(newmatrixB[c(2:29)]))
+Y1<-as.matrix(cbind(newmatrixB[1]))
+
+myremodelB<-lm(Y1 ~ X1)
+summary(myremodelB)
+
+finalLM<-lm(SalePrice ~ LotArea + OverallQual + OverallCond + YearBuilt + MasVnrArea + ExterQual.Ex + Foundation.CBlock + KitchenQual.Ex + Fireplaces + PoolArea, data = newmatrixA)
+summary(finalLM)
+
+finalGLM<-glm(SalePrice ~ LotArea + OverallQual + OverallCond + YearBuilt + MasVnrArea + ExterQual.Ex + Foundation.CBlock + KitchenQual.Ex + Fireplaces + PoolArea, data = newmatrixA,family = gaussian(link = "log"))
+summary(finalGLM)
+
+sale.predict<-predict(finalLM, reevald, type = "response")
+sale.predict<-as.numeric(sale.predict)
+reevald$SalePredict<-sale.predict
+
+#Imputation with mean
+reevald$SalePredict[is.na(reevald$SalePredict)] <- mean(reevald$SalePredict, na.rm = TRUE)
+summary(reevald$SalePredict)
+mySalesPredict<-data.frame(reevald$Id,reevald$SalePredict)
+
+#write.csv(mySalesPredict, "/Users/digitalmarketer1977/Desktop/SalePredict.csv")
+
+#automatic step() based on R^2
+#step(myremodel, direction = "backward")
+```
+
+Source: \href{https://www.mff.cuni.cz/veda/konference/wds/proc/pdf10/WDS10_105_i1_Reitermanova.pdf}{Data Splitting}
+
+Source: \href{http://www.r-tutor.com/elementary-statistics/goodness-fit/chi-squared-test-independence}{Chi-Square Test}
+
+Source: \href{https://www.rdocumentation.org/packages/car/versions/2.1-4/topics/bcPower}{Box-Cox Transformation Function in R}
+
+Source: \href{http://www.ecosigmasquared.com/Site/R_stuff_files/Fitting%20data%20to%20distributions.pdf}{Theta, R and Derivatives NB and Poisson Distribution}
+
+Source: \href{https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/rnegbin.html}{rnegbin function}
+
+Source: \href{https://www.packtpub.com/mapt/book/big-data-and-business-intelligence/9781783989065/1/ch01lvl1sec21/creating-dummies-for-categorical-variables}{Dummies Package for R}
+
+Source: \href{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/model.frame.html}{Model Frame Function}
